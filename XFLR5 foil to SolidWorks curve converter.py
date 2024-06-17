@@ -6,7 +6,8 @@ import pandas as pd
 import math
 
 # Inicialización de varibles con valores default
-archivo = "perfil.dat"
+archivo = "D:\Documentos\AeronauTEC\Convertidor perfil XFLR5 a SolidWorks\perfil.dat"
+arc_output = "D:\Documentos\AeronauTEC\Convertidor perfil XFLR5 a SolidWorks\output_perfil.txt"
 cuerda = 250
 columnas = ['x','y','z']
 eje = 'Z'
@@ -34,7 +35,7 @@ def aplicarModificaciones():
     global offsetY
     global offsetZ
     # Se reordenan las coordenadas tal que la curva aparezca en el plano solicitado
-    df = pd.read_csv("output_perfil.txt", names=columnas,sep=',')
+    df = pd.read_csv(arc_output, names=columnas,sep=',')
     if eje == 'Z':
         if plano == "lateral":
             df = df[['z','y','x']]
@@ -60,14 +61,20 @@ def aplicarModificaciones():
 
     # Se calcula el offset automáticamente en caso de que fuera solicitado, respecto al ángulo del diedro
     if diedro:
-        offsetY = (offsetX - inicio_diedro) / math.sin(math.pi/2-anguloZ) * math.sin(anguloZ)
+        if eje == 'Z':
+            if abs(offsetX) >= abs(inicio_diedro):
+                offsetY = abs(offsetX - inicio_diedro) / math.sin(math.pi/2-anguloZ) * math.sin(anguloZ)
+        elif eje == 'X':
+            if abs(offsetZ) >= abs(inicio_diedro):
+                offsetY = abs(offsetZ - inicio_diedro) / math.sin(math.pi/2-anguloX) * math.sin(anguloX)
+            
         
     # Se añade el offset solicitado a cada coordenada
     df[df.columns[0]] += offsetX
     df[df.columns[1]] += offsetY
     df[df.columns[2]] += offsetZ
     #Se actualiza el archivo de salida
-    df.to_csv("output_perfil.txt",index=False, header=False)
+    df.to_csv(arc_output,index=False, header=False)
 
 # Se reciben los datos de entrada y son validados
 arcinput = input("Nombre del archivo por convertir junto con su extension, debe estar en la misma carpeta que este script (default: perfil.dat): ")
@@ -99,19 +106,23 @@ if anguloZinput != '':
     anguloZ = math.radians(float(anguloZinput))
 
 print()
+diedroinput = input("Requiere calcular la coordenada Y automáticamente con diedro? (Y/n, default: n): ")
+if diedroinput != '':
+    if diedroinput == 'Y' or diedroinput == 'y':
+        diedro = True
+        inicio_diedro_input = input("Coordenada del eje transversal donde inicia diedro (default: 0): ")
+        if inicio_diedro_input != '':
+            inicio_diedro = float(inicio_diedro_input)
+
+
 print("Agregue offsets si lo requiere, se usa el sistema coordenado de SolidWorks, ingrese los datos en las unidades del programa. ")
 offsetXinput = input("Offset en eje x: ")
 if offsetXinput != '':
     offsetX = float(offsetXinput)
 
-offsetYinput = input("Offset en eje y (o 'diedro' para calculo automatico): ")
-if offsetYinput != '':
-    if offsetYinput == "diedro":
-        diedro = True
-        inicio_diedro_input = input("Coordenada del eje transversal donde inicia diedro (default: 0): ")
-        if inicio_diedro_input != '':
-            inicio_diedro = float(inicio_diedro_input)
-    else:
+if not diedro:
+    offsetYinput = input("Offset en eje y: ")
+    if offsetYinput != '':
         offsetY = float(offsetYinput)
 
 offsetZinput = input("Offset en eje z: ")
@@ -145,7 +156,7 @@ except FileNotFoundError:
     raise FileNotFoundError("No se encontro el archivo " + arcinput + ", asegurese de que el nombre es correcto y esta en la misma carpeta que el script")
 
 # Se escribe el archivo de salida con formato modificado   
-with open("output_perfil.txt",'w') as mod:
+with open(arc_output,'w') as mod:
     for linea in linea_mod:
         mod.write(linea)
 
