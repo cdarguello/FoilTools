@@ -10,7 +10,7 @@ import shutil
 # Variables globales
 arc_output = "D:\Documentos\AeronauTEC\Convertidor perfil XFLR5 a SolidWorks\output_perfil.txt"
 
-def aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro):
+def aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda):
     global arc_output
     columnas = ['x','y','z']
     # Se reordenan las coordenadas tal que la curva aparezca en el plano solicitado
@@ -38,7 +38,7 @@ def aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_
     df[df.columns[0]] = df[df.columns[0]] * math.cos(anguloZ) - df[df.columns[1]] * math.sin(anguloZ)
     df[df.columns[1]] = og * math.sin(anguloZ) + df[df.columns[1]] *  math.cos(anguloZ)
 
-    # Se calcula el offset automáticamente en caso de que fuera solicitado, respecto al ángulo del diedro
+    # Se calcula el offset automáticamente en caso de que fuera solicitado, respecto al ángulo del diedro y de flecha
     if diedro and i == None:
         if eje == 'Z':
             if abs(offsetX) >= abs(inicio_diedro):
@@ -59,6 +59,48 @@ def aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_
                 og = df[df.columns[1]]
                 df[df.columns[1]] = df[df.columns[1]] * math.cos(anguloDiedro) - df[df.columns[2]] * math.sin(anguloDiedro)
                 df[df.columns[2]] = og * math.sin(anguloDiedro) + df[df.columns[2]] *  math.cos(anguloDiedro)
+
+    if flecha != 0:
+        if eje == 'Z':
+            if abs(offsetX) >= abs(inicio_flecha):
+                offsetFlecha = (offsetX-inicio_flecha) * math.tan(anguloFlecha)
+            else:
+                offsetFlecha = 0
+        elif eje == 'X':
+            if abs(offsetZ) >= abs(inicio_flecha):
+                offsetFlecha = (offsetZ-inicio_flecha) * math.tan(anguloFlecha)
+            else:
+                offsetFlecha = 0
+        else:
+            offsetFlecha = 0
+
+        if flecha == 1:
+            cuerda_flecha = cuerda - (2 * offsetFlecha)
+        elif flecha == 2:
+            cuerda_flecha = cuerda - (offsetFlecha)
+        elif flecha == 3:
+            # El offset en este caso no se debe sumar al final
+            cuerda_flecha = cuerda - (offsetFlecha)
+            offsetFlecha = 0
+        else:
+            # En el caso de flecha == 4 (cuerda constante) solo es necesario sumar el offset
+            cuerda_flecha = cuerda
+    else:
+        offsetFlecha = 0
+        cuerda_flecha = cuerda
+    
+    # Se modifica la cuerda y se resta el offset de flecha en caso de que fuera necesario
+    if eje == 'Z':
+        if abs(offsetX) >= abs(inicio_flecha):
+            if cuerda_flecha < cuerda:
+                df *= cuerda_flecha / cuerda
+            df[df.columns[2]] -= offsetFlecha
+    elif eje == 'X':
+        if abs(offsetZ) >= abs(inicio_flecha):
+            if cuerda_flecha < cuerda:
+                df *= cuerda_flecha / cuerda
+            df[df.columns[0]] -= offsetFlecha
+
     # Se añade el offset solicitado a cada coordenada
     df[df.columns[0]] += offsetX
     df[df.columns[1]] += offsetY
@@ -109,6 +151,9 @@ def main():
     finAla = 200
     numCurvas = 5
     anguloDiedro = 0
+    flecha = 0
+    anguloFlecha = 0
+    inicio_flecha = 0
 
     # Se reciben los datos de entrada y son validados
     modoinput = input("Ingrese 1 si quiere usar el modo de curvas múltiples o 0 si quiere el modo simple (default): ")
@@ -143,7 +188,6 @@ def main():
     if anguloZinput != '':
         anguloZ = math.radians(float(anguloZinput))
 
-    print()
     diedroinput = input("Requiere calcular la coordenada Y automáticamente con diedro? (Y/n, default: n): ")
     if diedroinput != '':
         if diedroinput == 'Y' or diedroinput == 'y':
@@ -177,6 +221,17 @@ def main():
         anguloDiedroinput = input("Ángulo del diedro: ")
         if anguloDiedroinput != '':
             anguloDiedro = math.radians(float(anguloDiedroinput))
+        flechainput = input("Requiere generar un ala en flecha? (Y/n, default: n): ")
+        if flechainput == 'Y':
+            flechainput = input("Ingrese 1 si quiere ala trapezoidal, 2 borde salida constante, 3 borde entrada cosntante, 4 cuerda constante: ")
+            if flechainput in ['1', '2','3','4']:
+                flecha = int(flechainput)
+                anguloFlechainput = input("Ingrese el ángulo (°) de la flecha (negativo si flecha invertida): ")
+                if anguloFlechainput != '':
+                    anguloFlecha = math.radians(float(anguloFlechainput))
+                inicio_flecha_input = input("Coordenada del eje transversal donde inicia flecha (default: 0): ")
+                if inicio_flecha_input != '':
+                    inicio_flecha = float(inicio_flecha_input)
 
     # Preprocesamiento de los datos (transformación al formato requerido por SolidWorks)    
     try:
@@ -211,7 +266,7 @@ def main():
 
     # Se le aplican a los datos las modificaciones adicionales solicitadas
     if modo == 0: #En el modo simple se llama normal a la función
-        aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, None, anguloDiedro)
+        aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, None, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
     else: # En el modo de curvas múltiples se llama iterativamente a la función de modificaciones para crear el número de curvas solicitado
         if eje == 'Z':
             # Se calcula la distancia transversal a la que debe estar cada curva
@@ -223,10 +278,13 @@ def main():
                     offsetX = finAla
                 else:
                     offsetX = offsetX_inicio + dist*i
-                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro)
+                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
             if diedro:
                 offsetX = inicio_diedro
-                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "diedro", anguloDiedro)
+                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "diedro", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
+            if flecha != 0:
+                offsetX = inicio_flecha
+                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "flecha", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
         else:
             dist = (finAla - offsetZ) / (numCurvas-1)
             offsetZ_inicio = offsetZ
@@ -235,10 +293,13 @@ def main():
                     offsetZ = finAla
                 else:
                     offsetZ = offsetZ_inicio + dist*i
-                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro)
+                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
             if diedro:
                 offsetZ = inicio_diedro
-                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "diedro", anguloDiedro)
+                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "diedro", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
+            if flecha != 0:
+                offsetX = inicio_flecha
+                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "flecha", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
     
     #Eliminación del archivo temporal
     try:
