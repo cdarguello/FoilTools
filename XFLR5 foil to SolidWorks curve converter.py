@@ -39,23 +39,16 @@ def aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_
     df[df.columns[1]] = og * math.sin(anguloZ) + df[df.columns[1]] *  math.cos(anguloZ)
 
     # Se calcula el offset automáticamente en caso de que fuera solicitado, respecto al ángulo del diedro y de flecha
-    if diedro and i == None:
+    if diedro:
         if eje == 'Z':
             if abs(offsetX) >= abs(inicio_diedro):
-                offsetY = abs(offsetX - inicio_diedro) / math.sin(math.pi/2-anguloZ) * math.sin(anguloZ)
-        elif eje == 'X':
-            if abs(offsetZ) >= abs(inicio_diedro):
-                offsetY = abs(offsetZ - inicio_diedro) / math.sin(math.pi/2-anguloX) * math.sin(anguloX)
-    elif diedro and i != None:
-        if eje == 'Z':
-            if abs(offsetX) >= abs(inicio_diedro):
-                offsetY = abs(offsetX - inicio_diedro) / math.sin(math.pi/2-anguloDiedro) * math.sin(anguloDiedro)
+                offsetY += abs(offsetX - inicio_diedro) / math.sin(math.pi/2-anguloDiedro) * math.sin(anguloDiedro)
                 og = df[df.columns[0]]
                 df[df.columns[0]] = df[df.columns[0]] * math.cos(anguloDiedro) - df[df.columns[1]] * math.sin(anguloDiedro)
                 df[df.columns[1]] = og * math.sin(anguloDiedro) + df[df.columns[1]] *  math.cos(anguloDiedro)
         elif eje == 'X':
             if abs(offsetZ) >= abs(inicio_diedro):
-                offsetY = abs(offsetZ - inicio_diedro) / math.sin(math.pi/2-anguloDiedro) * math.sin(anguloDiedro)       
+                offsetY += abs(offsetZ - inicio_diedro) / math.sin(math.pi/2-anguloDiedro) * math.sin(anguloDiedro)       
                 og = df[df.columns[1]]
                 df[df.columns[1]] = df[df.columns[1]] * math.cos(anguloDiedro) - df[df.columns[2]] * math.sin(anguloDiedro)
                 df[df.columns[2]] = og * math.sin(anguloDiedro) + df[df.columns[2]] *  math.cos(anguloDiedro)
@@ -195,6 +188,9 @@ def main():
             inicio_diedro_input = input("Coordenada del eje transversal donde inicia diedro (default: 0): ")
             if inicio_diedro_input != '':
                 inicio_diedro = float(inicio_diedro_input)
+            anguloDiedroinput = input("Ángulo del diedro: ")
+            if anguloDiedroinput != '':
+                anguloDiedro = math.radians(float(anguloDiedroinput))
 
 
     print("Agregue offsets si lo requiere, se usa el sistema coordenado de SolidWorks, ingrese los datos en las unidades del programa. ")
@@ -202,10 +198,9 @@ def main():
     if offsetXinput != '':
         offsetX = float(offsetXinput)
 
-    if not diedro:
-        offsetYinput = input("Offset en eje y: ")
-        if offsetYinput != '':
-            offsetY = float(offsetYinput)
+    offsetYinput = input("Offset en eje y: ")
+    if offsetYinput != '':
+        offsetY = float(offsetYinput)
 
     offsetZinput = input("Offset en eje z: ")
     if offsetZinput != '':
@@ -218,9 +213,6 @@ def main():
         numCurvasinput = input("Numero de curvas por generar: ")
         if numCurvasinput != '':
             numCurvas = int(numCurvasinput)
-        anguloDiedroinput = input("Ángulo del diedro: ")
-        if anguloDiedroinput != '':
-            anguloDiedro = math.radians(float(anguloDiedroinput))
         flechainput = input("Requiere generar un ala en flecha? (Y/n, default: n): ")
         if flechainput == 'Y':
             flechainput = input("Ingrese 1 si quiere ala trapezoidal, 2 borde salida constante, 3 borde entrada cosntante, 4 cuerda constante: ")
