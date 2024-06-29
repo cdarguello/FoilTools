@@ -7,11 +7,8 @@ import math
 import os
 import shutil
 
-# Variables globales
-arc_output = "D:\Documentos\AeronauTEC\Convertidor perfil XFLR5 a SolidWorks\output_perfil.txt"
 
-def aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda):
-    global arc_output
+def aplicarModificaciones(arc_output, eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda):
     columnas = ['x','y','z']
     # Se reordenan las coordenadas tal que la curva aparezca en el plano solicitado
     df = pd.read_csv(arc_output, names=columnas,sep=',')
@@ -102,12 +99,17 @@ def aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_
     # Obtener los path relevantes
     n = len(arc_output) -1
     for c in reversed(arc_output):
-        if c == '\\':
+        if c == '/':
             break
         n -= 1
-    path = arc_output[:n+1]
-    file_name = arc_output[n+1:]
-    dir_path = os.path.join(path, "output")
+    
+    if n != -1:
+        path = arc_output[:n+1]
+        file_name = arc_output[n+1:]
+        dir_path = os.path.join(path, "output")
+    else:
+        file_name = arc_output
+        dir_path = "output"
 
     # Creación en limpio de la carpeta de output
     if i == 0 or i == None:
@@ -117,17 +119,96 @@ def aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_
     #Se actualiza el archivo de salida
     if i != None:
         if not isinstance(i, str):
-            df.to_csv(dir_path+"\\"+file_name[:-4]+"_"+str(i+1)+".txt",index=False, header=False)
+            df.to_csv(dir_path+"/"+file_name[:-4]+"_"+str(i+1)+".txt",index=False, header=False)
         else:
-            df.to_csv(dir_path+"\\"+file_name[:-4]+"_"+i+".txt",index=False, header=False)
+            df.to_csv(dir_path+"/"+file_name[:-4]+"_"+i+".txt",index=False, header=False)
     else:
-        df.to_csv(dir_path+"\\"+file_name,index=False, header=False)
+        df.to_csv(dir_path+"/"+file_name,index=False, header=False)
 
-def main():
-    global arc_output
+def main(archivo, arc_output, modo, cuerda, eje, plano, offsetX, offsetY, offsetZ, anguloX, anguloY, anguloZ, diedro, inicio_diedro, anguloDiedro, flecha, inicio_flecha, anguloFlecha, finAla, numCurvas):
+    i = 0
+    linea_mod = []
+    # Preprocesamiento de los datos (transformación al formato requerido por SolidWorks)    
+    try:
+        with open(archivo, "r+") as arc:
+            for linea in arc:
+                if i != 0:
+                    # Se cambian los espacios en blanco por comas, si el número es negativo hay un espacio en blanco de menos
+                    if linea[14] != '-':
+                        linea = linea.replace('     ', ',')
+                    else:
+                        linea = linea.replace('    ', ',')
+                    # Se elimina el espacio en blanco del inicio de cada línea
+                    if linea[0] == ' ':
+                        linea = linea[1:]
+                    # Se rellena la coordenada faltante con ceros
+                    linea = linea[:-1] + ",0\n"
+                    # Se multiplica cada coordenada por el valor de la cuerda
+                    dato1Fin = linea.find(",")
+                    linea = linea.replace(linea[:dato1Fin], str(float(linea[:dato1Fin])*cuerda))
+                    dato1Fin = linea.find(",")
+                    dato2Fin = linea[dato1Fin+1:].find(",") + dato1Fin +1
+                    linea = linea.replace(linea[dato1Fin+1:dato2Fin], str(float(linea[dato1Fin+1:dato2Fin])*cuerda))
+                    linea_mod.append(linea)
+                i +=1
+    except FileNotFoundError:
+        raise FileNotFoundError("No se encontro el archivo " + arcinput + ", asegurese de que el nombre es correcto y esta en la misma carpeta que el script")
+
+    # Se escribe el archivo de salida con formato modificado   
+    with open(arc_output,'w') as mod:
+        for linea in linea_mod:
+            mod.write(linea)
+
+    # Se le aplican a los datos las modificaciones adicionales solicitadas
+    if modo == 0: #En el modo simple se llama normal a la función
+        aplicarModificaciones(arc_output, eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, None, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
+    else: # En el modo de curvas múltiples se llama iterativamente a la función de modificaciones para crear el número de curvas solicitado
+        if eje == 'Z':
+            # Se calcula la distancia transversal a la que debe estar cada curva
+            dist = (finAla - offsetX) / (numCurvas-1)
+            offsetX_inicio = offsetX
+            # Se van creando perfiles con un offset transversal cada vez mayor, hasta llegar a un offset igual a donde termina el ala
+            for i in range(numCurvas):
+                if i == numCurvas-1:
+                    offsetX = finAla
+                else:
+                    offsetX = offsetX_inicio + dist*i
+                aplicarModificaciones(arc_output, eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
+            if diedro:
+                offsetX = inicio_diedro
+                aplicarModificaciones(arc_output, eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "diedro", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
+            if flecha != 0:
+                offsetX = inicio_flecha
+                aplicarModificaciones(arc_output, eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "flecha", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
+        else:
+            dist = (finAla - offsetZ) / (numCurvas-1)
+            offsetZ_inicio = offsetZ
+            for i in range(numCurvas):
+                if i == numCurvas-1:
+                    offsetZ = finAla
+                else:
+                    offsetZ = offsetZ_inicio + dist*i
+                aplicarModificaciones(arc_output, eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
+            if diedro:
+                offsetZ = inicio_diedro
+                aplicarModificaciones(arc_output, eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "diedro", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
+            if flecha != 0:
+                offsetX = inicio_flecha
+                aplicarModificaciones(arc_output, eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "flecha", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
+    
+    #Eliminación del archivo temporal
+    try:
+        os.remove(arc_output)
+    except OSError as error:
+        print(error)
+        print("No se pudo eliminar el archivo temporal")
+
+
+if __name__ == '__main__':
     # Inicialización de varibles con valores default
     modo = 0 #Modo 0 es modo simple, y modo 1 es el modo de curvas múltiples
-    archivo = "D:\Documentos\AeronauTEC\Convertidor perfil XFLR5 a SolidWorks\perfil.dat"
+    archivo = "perfil.dat"
+    arc_output = "output_perfil.txt"
     cuerda = 250
     eje = 'Z'
     plano = "lateral"
@@ -137,8 +218,6 @@ def main():
     anguloX = 0
     anguloY = 0
     anguloZ = 0
-    i = 0
-    linea_mod = []
     diedro = False
     inicio_diedro = 0
     finAla = 200
@@ -215,7 +294,7 @@ def main():
             numCurvas = int(numCurvasinput)
         flechainput = input("Requiere generar un ala en flecha? (Y/n, default: n): ")
         if flechainput == 'Y':
-            flechainput = input("Ingrese 1 si quiere ala trapezoidal, 2 borde salida constante, 3 borde entrada cosntante, 4 cuerda constante: ")
+            flechainput = input("Ingrese 1 si quiere ala trapezoidal, 2 borde salida constante, 3 borde entrada constante, 4 cuerda constante: ")
             if flechainput in ['1', '2','3','4']:
                 flecha = int(flechainput)
                 anguloFlechainput = input("Ingrese el ángulo (°) de la flecha (negativo si flecha invertida): ")
@@ -224,84 +303,4 @@ def main():
                 inicio_flecha_input = input("Coordenada del eje transversal donde inicia flecha (default: 0): ")
                 if inicio_flecha_input != '':
                     inicio_flecha = float(inicio_flecha_input)
-
-    # Preprocesamiento de los datos (transformación al formato requerido por SolidWorks)    
-    try:
-        with open(archivo, "r+") as arc:
-            for linea in arc:
-                if i != 0:
-                    # Se cambian los espacios en blanco por comas, si el número es negativo hay un espacio en blanco de menos
-                    if linea[14] != '-':
-                        linea = linea.replace('     ', ',')
-                    else:
-                        linea = linea.replace('    ', ',')
-                    # Se elimina el espacio en blanco del inicio de cada línea
-                    if linea[0] == ' ':
-                        linea = linea[1:]
-                    # Se rellena la coordenada faltante con ceros
-                    linea = linea[:-1] + ",0\n"
-                    # Se multiplica cada coordenada por el valor de la cuerda
-                    dato1Fin = linea.find(",")
-                    linea = linea.replace(linea[:dato1Fin], str(float(linea[:dato1Fin])*cuerda))
-                    dato1Fin = linea.find(",")
-                    dato2Fin = linea[dato1Fin+1:].find(",") + dato1Fin +1
-                    linea = linea.replace(linea[dato1Fin+1:dato2Fin], str(float(linea[dato1Fin+1:dato2Fin])*cuerda))
-                    linea_mod.append(linea)
-                i +=1
-    except FileNotFoundError:
-        raise FileNotFoundError("No se encontro el archivo " + arcinput + ", asegurese de que el nombre es correcto y esta en la misma carpeta que el script")
-
-    # Se escribe el archivo de salida con formato modificado   
-    with open(arc_output,'w') as mod:
-        for linea in linea_mod:
-            mod.write(linea)
-
-    # Se le aplican a los datos las modificaciones adicionales solicitadas
-    if modo == 0: #En el modo simple se llama normal a la función
-        aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, None, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
-    else: # En el modo de curvas múltiples se llama iterativamente a la función de modificaciones para crear el número de curvas solicitado
-        if eje == 'Z':
-            # Se calcula la distancia transversal a la que debe estar cada curva
-            dist = (finAla - offsetX) / (numCurvas-1)
-            offsetX_inicio = offsetX
-            # Se van creando perfiles con un offset transversal cada vez mayor, hasta llegar a un offset igual a donde termina el ala
-            for i in range(numCurvas):
-                if i == numCurvas-1:
-                    offsetX = finAla
-                else:
-                    offsetX = offsetX_inicio + dist*i
-                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
-            if diedro:
-                offsetX = inicio_diedro
-                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "diedro", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
-            if flecha != 0:
-                offsetX = inicio_flecha
-                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "flecha", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
-        else:
-            dist = (finAla - offsetZ) / (numCurvas-1)
-            offsetZ_inicio = offsetZ
-            for i in range(numCurvas):
-                if i == numCurvas-1:
-                    offsetZ = finAla
-                else:
-                    offsetZ = offsetZ_inicio + dist*i
-                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, i, anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
-            if diedro:
-                offsetZ = inicio_diedro
-                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "diedro", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
-            if flecha != 0:
-                offsetX = inicio_flecha
-                aplicarModificaciones(eje, plano, anguloX, anguloY, anguloZ, diedro, inicio_diedro, offsetX, offsetY, offsetZ, "flecha", anguloDiedro, flecha, anguloFlecha, inicio_flecha, cuerda)
-    
-    #Eliminación del archivo temporal
-    try:
-        os.remove(arc_output)
-    except OSError as error:
-        print(error)
-        print("No se pudo eliminar el archivo temporal")
-
-    print("El archivo creado se llama ", arc_output,".")
-    input("Presione Enter para terminar el programa")
-
-if __name__ == '__main__':
-    main()
+    main(archivo, arc_output, modo, cuerda, eje, plano, offsetX, offsetY, offsetZ, anguloX, anguloY, anguloZ, diedro, inicio_diedro, anguloDiedro, flecha, inicio_flecha, anguloFlecha, finAla, numCurvas)
