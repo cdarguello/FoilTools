@@ -40,9 +40,9 @@
 
   Existen dos posibilidades:
   1. Usando Python: se requiere tener instalado Python 3.X y Git, luego se debe clonar este repositorio y ejecutar en una consola en la carpeta principal donde se clonó el repositorio lo siguiente:
-'''
+```
 pip install -r requirements.txt
-'''
+```
      Una vez hecho esto debería ser posible ejecutar el script con interfaz o sin interfaz para utilizar la aplicación
   2. Instalador de Windows: si su sistema operativo es Windows puede descargar y seguir los pasos del archivo llamado "FoilTools-installer" y luego utilizar un acceso directo o el .exe para usar la aplicación con interfaz gráfica.
 
