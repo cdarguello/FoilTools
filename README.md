@@ -34,7 +34,7 @@
        gets smaller), and [inverse] swept-wings with a fixed chord.
        
   This project was made by Carlos Argüello, co-leader of the CAD department of the award-winning SAE Aerodesign team "AeronauTEC", based in Costa Rican Institute of Technology (ITCR, Cartago, Costa Rica).
-  **IMPORTANT NOTE: this project currently has no plans to have a full English translation, the user-guide and the GUI is completely in Spanish due to me not seeing the necessity in it; but if enough people reach out to me at cdavid.030715@gmail.com I will consider adding full English support.
+  **IMPORTANT NOTE: this project currently has no plans to have a full English translation, the user-guide and the GUI is completely in Spanish due to me not seeing the necessity in it; but if enough people reach out to me by preferably writing a comment on the repo or at cdavid.030715@gmail.com I will consider adding full English support.
 
   ## Guía de Instalación
 
