@@ -45,7 +45,8 @@
 pip install -r requirements.txt
 ```
 
-   Una vez hecho esto debería ser posible ejecutar el script con interfaz o sin interfaz para utilizar la aplicación
+   Una vez hecho esto debería ser posible ejecutar el script con interfaz o sin interfaz para utilizar la aplicación.
+   
   2. Instalador de Windows: si su sistema operativo es Windows puede descargar y seguir los pasos del archivo llamado "FoilTools-installer" y luego utilizar un acceso directo o el .exe para usar la aplicación con interfaz gráfica.
 
  ## Guía de Uso
