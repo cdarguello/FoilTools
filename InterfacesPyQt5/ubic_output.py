@@ -105,10 +105,16 @@ class Ui_ubic_output(object):
             anguloY = math.radians(float(ui_main.anguloY.text()))
             anguloZ = math.radians(float(ui_main.anguloZ.text()))
             diedro = ui_main.diedro.isChecked()
-            inicio_diedro = float(ui_diedro.inicio_diedro.text())
-            anguloDiedro = math.radians(float(ui_diedro.anguloDiedro.text()))
+            if diedro:
+                inicio_diedro = float(ui_diedro.inicio_diedro.text())
+                anguloDiedro = math.radians(float(ui_diedro.anguloDiedro.text()))
+            else:
+                inicio_diedro = 0
+                anguloDiedro = 0
             #1 si quiere ala trapezoidal, 2 borde salida constante, 3 borde entrada constante, 4 cuerda constante
             if ui_main.flecha.isChecked():
+                anguloFlecha = math.radians(float(ui_flecha.anguloFlecha.text()))
+                inicio_flecha = float(ui_flecha.inicio_flecha.text())
                 tipoFlecha = ui_flecha.tipo_flecha.currentText()
                 if tipoFlecha == "Ala trapezoidal":
                     flecha = 1
@@ -122,9 +128,12 @@ class Ui_ubic_output(object):
                     print("Tipo de flecha desconocido")
             else:
                 flecha = 0
-            anguloFlecha = math.radians(float(ui_flecha.anguloFlecha.text()))
-            inicio_flecha = float(ui_flecha.inicio_flecha.text())
-            finAla = float(ui_curvas.fin_ala.text())
+                anguloFlecha = 0
+                inicio_flecha = 0
+            if modo:
+                finAla = float(ui_curvas.fin_ala.text())
+            else:
+                finAla = 0
             numCurvas = int(ui_curvas.num_curvas.text())
             FoilTools_script.main(archivo, arc_output, modo, cuerda, eje, plano, offsetX, offsetY, offsetZ, anguloX, anguloY, anguloZ, diedro, inicio_diedro, anguloDiedro, flecha, inicio_flecha, anguloFlecha, finAla, numCurvas)
             # Mostrar mensaje de finalización
