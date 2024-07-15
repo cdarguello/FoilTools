@@ -12,7 +12,7 @@
  2. Modo de curvas múltiples:
     - Todo lo anterior para definir una curva base.
     - Recibir un intervalo de coordenadas y crear dado número de curvas intermedias según las especificaciones (tomando en cuenta diedro y flecha).
-    - Generación automática de alas en flecha del estilo: trapezoidales o elípticas, flechas normales e invertidas con coordenada de borde de salida/ataque (respectivamente)         fija (cuerda va disminuyendo), y alas en flecha normal e invertida con cuerda constante.
+    - Generación automática de alas en flecha del estilo: trapezoidales, flechas normales e invertidas con coordenada de borde de salida/ataque (respectivamente)         fija (cuerda va disminuyendo), y alas en flecha normal e invertida con cuerda constante.
    
   Este programa fue hecho por Carlos Argüello, colíder del área de CAD del galardonado equipo de SAE Aerodesign "AeronauTEC", basado en el Instituto Tecnológico de Costa Rica (ITCR, Cartago, Costa Rica). 
 
@@ -30,10 +30,10 @@
   2. Multiple Curves mode:
      - Uses all of the previous functions to define a base curve.
      - Asks for a coordinate interval and a number of intermediate curves according to specifications (taking into account dihedral and swept-wings).
-     - Automatic generation of swept-wing foils of the following types: trapezoidal or elliptical, [inverse] swept-wings with a certain fixed leading/trailing edge (chord 
+     - Automatic generation of swept-wing foils of the following types: trapezoidal, [inverse] swept-wings with a certain fixed leading/trailing edge (chord 
        gets smaller), and [inverse] swept-wings with a fixed chord.
        
-  This project was made by Carlos Argüello, co-leader of the CAD department of the award-winning SAE Aerodesign team "AeronauTEC", based in Costa Rican Institute of Technology (ITCR, Cartago, Costa Rica).
+  This project was made by Carlos Argüello, co-leader of the CAD department of the award-winning SAE Aerodesign team "AeronauTEC", based in Costa Rica Institute of Technology (ITCR, Cartago, Costa Rica).
   **IMPORTANT NOTE: this project currently has no plans to have a full English translation, the user-guide and the GUI is completely in Spanish due to me not seeing the necessity in it; but if enough people reach out to me by preferably writing a comment on the repo or at cdavid.030715@gmail.com I will consider adding full English support.
 
   ## Guía de Instalación
