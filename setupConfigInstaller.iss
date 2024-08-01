@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "FoilTools"
-#define MyAppVersion "2.1"
+#define MyAppVersion "2.2"
 #define MyAppPublisher "Carlos Arguello"
 #define MyAppURL "https://github.com/cdarguello/FoilTools"
 #define MyAppExeName "FoilTools_con_interfaz.exe"

@@ -116,6 +116,8 @@ def aplicarModificaciones(arc_output, eje, plano, anguloX, anguloY, anguloZ, die
         if os.path.exists(dir_path):
             shutil.rmtree(dir_path)
             os.mkdir(dir_path)
+        else:
+            os.mkdir(dir_path)
     #Se actualiza el archivo de salida
     if i != None:
         if not isinstance(i, str):
